@@ -9,10 +9,6 @@ namespace DataFetchService
 {
     class Utils
     {
-        public static String getFormattedDateForLog()
-        {
-            return DateTime.Now.ToString("[MM-dd-yyyy H:mm:ss]");
-        }
 
         public static bool isIPAddressValid(String ipAddress)
         {

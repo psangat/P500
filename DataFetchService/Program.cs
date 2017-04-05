@@ -9,7 +9,9 @@ namespace DataFetchService
         {
             Console.SetOut(new ConsoleWriter());
             Console.WriteLine("Starting Data Fetch Service for P500...");
-            var ipAddress = "1920.168.1.10";
+            var ipAddress = "Invalid.IP.Address.Initialization";
+            
+            // Ask for IP address until user inputs valid IP address
             while (!Utils.isIPAddressValid(ipAddress))
             {
                 Console.Write("Instrument IP address: ");
