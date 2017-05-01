@@ -6,11 +6,13 @@ using Agilent.Nexus.ScpClient.ScpHandler;
 using Agilent.Nexus.ScpClient.SLIP;
 using Agilent.Nexus.Xdr;
 using DataFetchService;
+using Newtonsoft.Json;
 using RFControlAsyncApp;
 using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace DataFetchService
 {
@@ -21,8 +23,6 @@ namespace DataFetchService
         private ConnectionTcp _instrumentConnection;
         private AuroraDiagnosticPort _diagnosticPort;
         private const int _serverPort = 8765;
-
-        
 
         public void connect_To_Instrument(string ipAddress)
         {
@@ -59,48 +59,30 @@ namespace DataFetchService
             get { return 0x60; }
         }
 
-      
-         
-      
-        public async Task<AsyncSsrfStatus> getSSRFMeasurements()
+        public string getSSRFStatus()
         {
-            AsyncSsrfStatus _ssrfStatus = new AsyncSsrfStatus();
-            await new Task(()=>
+            return getSSRFStatusJSONString().GetAwaiter().GetResult();
+        }
+
+        public async Task<string> getSSRFStatusJSONString()
+        {
+            string result = string.Empty;
+            await new Task(() =>
             {
                 try
                 {
                     if (_instrumentConnection.State == ConnectionState.Connected)
                     {
                         DirectSlipServer _server = new DirectSlipServer(_diagnosticPort);
-                        AsyncAlarmStatus _alarmStatus = new AsyncAlarmStatus();
+                        AsyncSsrfStatus _ssrfStatus = new AsyncSsrfStatus();
 
                         _ssrfStatus.Configure(_server, SubsystemID);
-
                         while (_ssrfStatus.StatusUpdated <= 0)
                         {
                             // wait for status update
                         }
-                        // _alarmStatus.Configure(_server, SubsystemID);
-
-                        if (_ssrfStatus.StatusUpdated > 0)
-                        {
-                            Console.WriteLine("Dac0FeedbackVolts: {0}", _ssrfStatus.Dac0FeedBackVolts);
-                            Console.WriteLine("HVPSVolts: {0}", _ssrfStatus.HVPSVolts);
-                            Console.WriteLine("HVPSAmps: {0}", _ssrfStatus.HVPSAmps);
-                            Console.WriteLine("HVPSSymmetryVolts: {0}", _ssrfStatus.HVPSSymmetryVolts);
-                            Console.WriteLine("Temp1Celsius: {0}", _ssrfStatus.Temp1Celsius);
-                            Console.WriteLine("Temp2Celsius: {0}", _ssrfStatus.Temp2Celsius);
-                            Console.WriteLine("Temp3Celsius: {0}", _ssrfStatus.Temp3Celsius);
-                            Console.WriteLine("DogBoneCelsius: {0}", _ssrfStatus.DogBoneCelsius);
-                            Console.WriteLine("WorkCoilAmps: {0}", _ssrfStatus.WorkCoilAmps);
-                            Console.WriteLine("WorkCoilHertz: {0}", _ssrfStatus.WorkCoilHertz);
-                            Console.WriteLine("OscillatorHertz: {0}", _ssrfStatus.OscillatorHertz);
-                            Console.WriteLine("OscillatorHertz2: {0}", _ssrfStatus.OscillatorHertz2);
-                            Console.WriteLine("AirFlowHertz: {0}", _ssrfStatus.AirFlowHertz);
-                            Console.WriteLine("CurrentPowerWatts: {0}", _ssrfStatus.CurrentPowerWatts);
-                            Console.WriteLine("====================================================");
-
-                        }
+                        result = JsonConvert.SerializeObject(_ssrfStatus);
+                        _server.Close();
                     }
                     else
                     {
@@ -109,13 +91,50 @@ namespace DataFetchService
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error in getting SSRF Measurements");
+                    Console.WriteLine("Error in getting SSRF Status");
                     Console.WriteLine(ex.Message);
-
                 }
-               
             });
-            return _ssrfStatus;
+            return result;
+        }
+
+        public string getAlarmStatus()
+        {
+            return getAlarmStatusJSONString().GetAwaiter().GetResult();
+        }
+
+        public async Task<string> getAlarmStatusJSONString()
+        {
+            string result = string.Empty;
+            await new Task(() =>
+            {
+                try
+                {
+                    if (_instrumentConnection.State == ConnectionState.Connected)
+                    {
+                        DirectSlipServer _server = new DirectSlipServer(_diagnosticPort);
+                        AsyncAlarmStatus _alarmStatus = new AsyncAlarmStatus();
+
+                        _alarmStatus.Configure(_server, SubsystemID);
+                        while (_alarmStatus.StatusUpdated <= 0)
+                        {
+                            // wait for status update
+                        }
+                        result = JsonConvert.SerializeObject(_alarmStatus);
+                        _server.Close();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Instrument not connected. Please connect instrument first.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error in getting Alarm Status");
+                    Console.WriteLine(ex.Message);
+                }
+            });
+            return result;
         }
     }
 }

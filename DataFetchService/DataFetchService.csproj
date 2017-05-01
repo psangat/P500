@@ -63,6 +63,7 @@
     <Reference Include="AuroraProtocol">
       <HintPath>RequiredDLLS\AuroraProtocol.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL" />
     <Reference Include="NexusScpClient">
       <HintPath>RequiredDLLS\NexusScpClient.dll</HintPath>
     </Reference>
