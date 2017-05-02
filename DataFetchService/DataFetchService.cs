@@ -1,17 +1,14 @@
 ﻿using Agilent.AtomicSpectroscopy.ICP.Protocol.Scp;
-using Agilent.Nexus.Protocol.Scp;
 using Agilent.Nexus.ScpClient.Connection;
 using Agilent.Nexus.ScpClient.PublicInterfaces;
 using Agilent.Nexus.ScpClient.ScpHandler;
 using Agilent.Nexus.ScpClient.SLIP;
-using Agilent.Nexus.Xdr;
-using DataFetchService;
 using Newtonsoft.Json;
 using RFControlAsyncApp;
 using System;
-using System.ComponentModel;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 
 namespace DataFetchService
@@ -24,7 +21,7 @@ namespace DataFetchService
         private AuroraDiagnosticPort _diagnosticPort;
         private const int _serverPort = 8765;
 
-        public void connect_To_Instrument(string ipAddress)
+        public void connectToInstrument(string ipAddress)
         {
             _instrumentConnection = new ConnectionTcp(ipAddress, _serverPort);
             _packetSender = new ProtocolSender(_instrumentConnection);
@@ -59,16 +56,12 @@ namespace DataFetchService
             get { return 0x60; }
         }
 
+       
+
         public string getSSRFStatus()
         {
-            return getSSRFStatusJSONString().GetAwaiter().GetResult();
-        }
-
-        public async Task<string> getSSRFStatusJSONString()
-        {
             string result = string.Empty;
-            await new Task(() =>
-            {
+            
                 try
                 {
                     if (_instrumentConnection.State == ConnectionState.Connected)
@@ -94,20 +87,14 @@ namespace DataFetchService
                     Console.WriteLine("Error in getting SSRF Status");
                     Console.WriteLine(ex.Message);
                 }
-            });
+            
             return result;
         }
 
         public string getAlarmStatus()
         {
-            return getAlarmStatusJSONString().GetAwaiter().GetResult();
-        }
-
-        public async Task<string> getAlarmStatusJSONString()
-        {
             string result = string.Empty;
-            await new Task(() =>
-            {
+           
                 try
                 {
                     if (_instrumentConnection.State == ConnectionState.Connected)
@@ -133,8 +120,23 @@ namespace DataFetchService
                     Console.WriteLine("Error in getting Alarm Status");
                     Console.WriteLine(ex.Message);
                 }
-            });
             return result;
+        }
+
+        public void sendStatus(string text_to_send, Socket sending_socket, IPEndPoint sending_end_point)
+        {
+            // the socket object must have an array of bytes to send.
+            // this loads the string entered by the user into an array of bytes.
+            byte[] send_buffer = Encoding.ASCII.GetBytes(text_to_send);
+
+            try
+            {
+                sending_socket.SendTo(send_buffer, sending_end_point);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

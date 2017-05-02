@@ -1,14 +1,6 @@
-﻿using Agilent.AtomicSpectroscopy.ICP.Protocol.Scp;
-using Agilent.Nexus.Protocol.Scp;
-using Agilent.Nexus.ScpClient.Connection;
-using Agilent.Nexus.ScpClient.PublicInterfaces;
-using Agilent.Nexus.ScpClient.ScpHandler;
-using Agilent.Nexus.ScpClient.SLIP;
-using Agilent.Nexus.Xdr;
-using RFControlAsyncApp;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System;
+using System.Net;
+using System.Net.Sockets;
 
 namespace DataFetchService
 {
@@ -21,24 +13,24 @@ namespace DataFetchService
             Console.WriteLine("Starting Data Fetch Service for P500...");
             var ipAddress = "146.223.0.238";
 
-            // Ask for IP address until user inputs valid IP address
-            while (!Utils.isIPAddressValid(ipAddress))
-            {
-                Console.Write("Instrument IP address: {0}", ipAddress);
-                //ipAddress = Console.ReadLine();
-                Console.WriteLine();
-            }
+            
             var dataFetchService = new DataFetchService();
-            dataFetchService.connect_To_Instrument(ipAddress);
+            dataFetchService.connectToInstrument(ipAddress);
 
-            for (int i = 0; i < 10; i++)
+            Socket sendingSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            // 146.223.0.73
+            // 10.57.115.133
+            IPAddress sendToAddress = IPAddress.Parse("10.57.115.133");
+            IPEndPoint sendingEndPoint = new IPEndPoint(sendToAddress, 4444);
+            Console.WriteLine("Sending the subsystem control status as UDP packets.");
+
+            while (true)
             {
-                Task<AsyncSsrfStatus> _xyz = dataFetchService.getSSRFMeasurements();
-                // AsyncSsrfStatus _ssrfStatus = await _xyz.ConfigureAwait(fa);
-
+                string ssrfStatus = dataFetchService.getSSRFStatus();
+                dataFetchService.sendStatus(ssrfStatus, sendingSocket, sendingEndPoint);
+                Console.WriteLine(ssrfStatus);
             }
 
-            Console.ReadKey();
         }
     }
 }
