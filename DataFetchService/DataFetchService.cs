@@ -31,7 +31,6 @@ namespace DataFetchService
 
             try
             {
-                Console.WriteLine("Connecting to {0}", ipAddress);
                 if (_instrumentConnection.State == ConnectionState.Connected)
                 {
                     _diagnosticPort.Close();
@@ -45,9 +44,7 @@ namespace DataFetchService
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error in instrument connection");
-                Console.WriteLine(ex.Message);
-                return;
+                throw ex;
             }
         }
 
@@ -56,86 +53,82 @@ namespace DataFetchService
             get { return 0x60; }
         }
 
-       
+
 
         public string getSSRFStatus()
         {
             string result = string.Empty;
-            
-                try
-                {
-                    if (_instrumentConnection.State == ConnectionState.Connected)
-                    {
-                        DirectSlipServer _server = new DirectSlipServer(_diagnosticPort);
-                        AsyncSsrfStatus _ssrfStatus = new AsyncSsrfStatus();
 
-                        _ssrfStatus.Configure(_server, SubsystemID);
-                        while (_ssrfStatus.StatusUpdated <= 0)
-                        {
-                            // wait for status update
-                        }
-                        result = JsonConvert.SerializeObject(_ssrfStatus);
-                        _server.Close();
-                    }
-                    else
-                    {
-                        Console.WriteLine("Instrument not connected. Please connect instrument first.");
-                    }
-                }
-                catch (Exception ex)
+            try
+            {
+                if (_instrumentConnection.State == ConnectionState.Connected)
                 {
-                    Console.WriteLine("Error in getting SSRF Status");
-                    Console.WriteLine(ex.Message);
+                    DirectSlipServer _server = new DirectSlipServer(_diagnosticPort);
+                    AsyncSsrfStatus _ssrfStatus = new AsyncSsrfStatus();
+
+                    _ssrfStatus.Configure(_server, SubsystemID);
+                    while (_ssrfStatus.StatusUpdated <= 0)
+                    {
+                        // wait for status update
+                    }
+                    result = JsonConvert.SerializeObject(_ssrfStatus);
+                    _server.Close();
                 }
-            
+                else
+                {
+                    result = "Instrument not connected. Please connect instrument first.";
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+                
+            }
+
             return result;
         }
 
         public string getAlarmStatus()
         {
             string result = string.Empty;
-           
-                try
-                {
-                    if (_instrumentConnection.State == ConnectionState.Connected)
-                    {
-                        DirectSlipServer _server = new DirectSlipServer(_diagnosticPort);
-                        AsyncAlarmStatus _alarmStatus = new AsyncAlarmStatus();
-
-                        _alarmStatus.Configure(_server, SubsystemID);
-                        while (_alarmStatus.StatusUpdated <= 0)
-                        {
-                            // wait for status update
-                        }
-                        result = JsonConvert.SerializeObject(_alarmStatus);
-                        _server.Close();
-                    }
-                    else
-                    {
-                        Console.WriteLine("Instrument not connected. Please connect instrument first.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error in getting Alarm Status");
-                    Console.WriteLine(ex.Message);
-                }
-            return result;
-        }
-
-        public void sendStatus(string text_to_send, Socket sending_socket, IPEndPoint sending_end_point)
-        {
-            // the socket object must have an array of bytes to send.
-            // this loads the string entered by the user into an array of bytes.
-            byte[] send_buffer = Encoding.ASCII.GetBytes(text_to_send);
 
             try
             {
-                sending_socket.SendTo(send_buffer, sending_end_point);
+                if (_instrumentConnection.State == ConnectionState.Connected)
+                {
+                    DirectSlipServer _server = new DirectSlipServer(_diagnosticPort);
+                    AsyncAlarmStatus _alarmStatus = new AsyncAlarmStatus();
+
+                    _alarmStatus.Configure(_server, SubsystemID);
+                    while (_alarmStatus.StatusUpdated <= 0)
+                    {
+                        // wait for status update
+                    }
+                    result = JsonConvert.SerializeObject(_alarmStatus);
+                    _server.Close();
+                }
+                else
+                {
+                    result = "Instrument not connected. Please connect instrument first.";
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                throw ex;
+            }
+            return result;
+        }
+
+        public void sendStatus(string textToSend, Socket sendingSocket, IPEndPoint sendingEndPoint)
+        {
+            byte[] send_buffer = Encoding.ASCII.GetBytes(textToSend);
+            try
+            {
+                sendingSocket.SendTo(send_buffer, sendingEndPoint);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
     }
