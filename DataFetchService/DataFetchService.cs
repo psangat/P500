@@ -3,6 +3,7 @@ using Agilent.Nexus.ScpClient.Connection;
 using Agilent.Nexus.ScpClient.PublicInterfaces;
 using Agilent.Nexus.ScpClient.ScpHandler;
 using Agilent.Nexus.ScpClient.SLIP;
+using DetectorDiagnostics;
 using Newtonsoft.Json;
 using RFControlAsyncApp;
 using System;
@@ -77,6 +78,7 @@ namespace DataFetchService
                 else
                 {
                     result = "Instrument not connected. Please connect instrument first.";
+                    throw new Exception(result);
                 }
             }
             catch (Exception ex)
@@ -110,6 +112,7 @@ namespace DataFetchService
                 else
                 {
                     result = "Instrument not connected. Please connect instrument first.";
+                    throw new Exception(result);
                 }
             }
             catch (Exception ex)
@@ -118,6 +121,38 @@ namespace DataFetchService
             }
             return result;
         }
+
+        public string getRadialScanStatus()
+        {
+            string result = string.Empty;
+            try
+            {
+                if (_instrumentConnection.State == ConnectionState.Connected)
+                {
+                    RadialScanStatus _radialScanStatus = new RadialScanStatus();
+                    _radialScanStatus.Configure(_diagnosticPort);
+                    // true because Aurora code has it true 
+                    // D:\Aurora\host\DetectorDiagnostics\DetectorDiagnosticsControl.cs line 153
+                    _radialScanStatus.Update(true); 
+                    while (_radialScanStatus.Status <= 0)
+                    {
+                        // wait for status update
+                    }
+                    result = JsonConvert.SerializeObject(_radialScanStatus);
+                }
+                else
+                {
+                    result = "Instrument not connected. Please connect instrument first.";
+                    throw new Exception(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return result;
+        }
+
 
         public void sendStatus(string textToSend, Socket sendingSocket, IPEndPoint sendingEndPoint)
         {
